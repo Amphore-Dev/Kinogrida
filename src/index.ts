@@ -1,1 +1,1 @@
-export const testString: string = "Hello, World!";
+export * from "./classes/index.js";

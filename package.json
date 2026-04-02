@@ -1,6 +1,6 @@
 {
-    "name": "@amphore-dev/npm-package-template",
-    "version": "0.7.0",
+    "name": "@amphore-dev/kinogrida",
+    "version": "0.1.0",
     "description": "Library for creating animated shape visualizations on canvas.",
     "type": "module",
     "main": "dist/index.js",
@@ -29,14 +29,14 @@
         "library"
     ],
     "bugs": {
-        "url": "https://github.com/Amphore-Dev/npm-package-template/issues"
+        "url": "https://github.com/Amphore-Dev/kinogrida/issues"
     },
-    "homepage": "https://amphore-dev.github.io/npm-package-template/",
+    "homepage": "https://amphore-dev.github.io/kinogrida/",
     "author": "Amphore Development Team",
     "license": "MIT",
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/Amphore-Dev/npm-package-template.git"
+        "url": "git+https://github.com/Amphore-Dev/kinogrida.git"
     },
     "scripts": {
         "build": "tsc",

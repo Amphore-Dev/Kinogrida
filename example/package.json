@@ -13,7 +13,7 @@
     "format:check": "prettier --check ."
   },
   "dependencies": {
-    "@amphore-dev/npm-package-template": "file:..",
+    "@amphore-dev/kinogrida": "file:..",
     "react": "^19.2.4",
     "react-dom": "^19.2.4"
   },

@@ -2,7 +2,7 @@
 # yarn lockfile v1
 
 
-"@amphore-dev/npm-package-template@file:..":
+"@amphore-dev/kinogrida@file:..":
   version "0.7.0"
 
 "@babel/code-frame@^7.28.6", "@babel/code-frame@^7.29.0":
