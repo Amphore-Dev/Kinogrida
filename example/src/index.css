@@ -1,1 +1,21 @@
 @import "tailwindcss";
+
+* {
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+@font-face {
+  font-family: "neon";
+  src: url("./fonts/NeoNeon-Light.otf") format("opentype");
+  font-weight: normal;
+  font-style: normal;
+}
+
+.font-neon {
+  font-family: "neon", sans-serif;
+}
+
+.justify-items-right {
+  justify-items: right;
+}

@@ -8,8 +8,9 @@ Kinogrida provides a powerful and flexible system for creating animated grid-bas
 
 - 🎯 **Grid-based Animation System** - Smooth movement between grid cells with pathfinding
 - 🔒 **Collision Detection** - Smart path locking prevents overlapping movements
-- 🎨 **Multiple Shape Types** - BaseItem, RoundedShape, SquareShape with extensible architecture
+- 🎨 **Multiple Shape Types** - BaseShape, SquareShape, and ArcShape with extensible architecture
 - 🌈 **Rich Color Palettes** - 8 pre-built themes (Rainbow, Pastel, Neon, Ocean, Sunset, Dark, Earth, Cyberpunk)
+- 🔄 **Advanced Arc Animation** - Clockwise/counterclockwise rotation with configurable amplitude
 - ⚡ **High Performance** - Optimized rendering with requestAnimationFrame
 - 📱 **Responsive Design** - Auto-adapts to canvas resizing
 - 🎛️ **Highly Customizable** - Extensive configuration options
@@ -59,13 +60,21 @@ const colors = CCOLORS_CYBERPUNK_PALETTE;
 ### Creating Custom Shapes
 
 ```typescript
-import { BaseShape } from "@amphore-dev/kinogrida";
+import {
+    BaseShape,
+    TGrid,
+    TGridConfig,
+    TShapeConfig,
+} from "@amphore-dev/kinogrida";
 
 export class CustomShape extends BaseShape {
     public draw(context: CanvasRenderingContext2D, gridConfig: TGridConfig) {
         // Your custom drawing logic
         context.fillStyle = this.color;
-        context.fillRect(x, y, width, height);
+        const { cellSize, offsetX, offsetY } = gridConfig;
+        const x = offsetX + this.x * cellSize;
+        const y = offsetY + this.y * cellSize;
+        context.fillRect(x, y, cellSize, cellSize);
     }
 }
 ```
@@ -79,6 +88,7 @@ const gridConfig = {
     gridMargin: 50, // Margin around grid
     cellSize: 40, // Size of each cell (auto-calculated)
     lineWidth: 2, // Stroke width for shapes
+    debug: false, // Show debug information
 };
 ```
 
@@ -97,7 +107,8 @@ The library features an intelligent movement system:
 
 - **`Kinogrida`** - Main orchestrator class managing canvas and animation
 - **`BaseShape`** - Abstract base class for all animated shapes
-- **`SquareShape`** - Square implementation with optional rounding
+- **`SquareShape`** - Square implementation with optional rounded corners
+- **`ArcShape`** - Curved arc implementation with rotation and directional control
 
 ### Movement Lifecycle
 
@@ -121,15 +132,37 @@ const item = new BaseShape(grid, x, y, color);
 
 ### SquareShape
 
-SquareShape extends BaseShape to create squares with optional rounded corners. The `radiusPercent` option allows you to control the roundness of the corners.
+SquareShape extends BaseShape to create squares with optional rounded corners.
 
 ```typescript
 // Configurable squares with optional rounding
 const square = new SquareShape(grid, x, y, {
     color: "blue",
-    radiusPercent: 25, // 0-100 percentage
+    radiusPercent: 25, // 0-100 percentage for rounded corners
 });
 ```
+
+### ArcShape
+
+ArcShape extends BaseShape to create dynamic curved arcs with advanced rotation capabilities.
+
+```typescript
+// Dynamic arcs with advanced rotation control
+const arc = new ArcShape(grid, x, y, {
+    color: "red",
+    clockwise: true, // Rotation direction
+    rotationAmount: 0.25, // 0.25=quarter, 0.5=half, 0.75=three-quarter, 1.0=full rotation
+});
+```
+
+#### ArcShape Rotation Options
+
+- **`clockwise`** - `true` for clockwise, `false` for counterclockwise rotation
+- **`rotationAmount`** - Amplitude of rotation:
+    - `0.25` - Quarter turn (90°)
+    - `0.5` - Half turn (180°)
+    - `0.75` - Three-quarter turn (270°)
+    - `1.0` - Full rotation (360°)
 
 ## 📚 Development
 

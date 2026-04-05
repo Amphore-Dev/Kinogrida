@@ -1,44 +1,3 @@
-export const CCOLORS_RAINBOW_PALETTE = [
-    "red",
-    "orange",
-    "gold",
-    "yellow",
-    "green",
-    "lime",
-    "cyan",
-    "lightblue",
-    "teal",
-    "blue",
-    "magenta",
-    "white",
-];
-
-export const CCOLORS_PASTEL_PALETTE = [
-    "#FFB3BA", // pastel pink
-    "#FFDFBA", // pastel orange
-    "#FFFFBA", // pastel yellow
-    "#BAFFC9", // pastel green
-    "#BAE1FF", // pastel blue
-    "#FFB3FE", // pastel purple
-    "#E6E6FA", // lavender
-    "#F0E68C", // khaki
-    "#DDA0DD", // plum
-    "#98D8C8", // mint
-];
-
-export const CCOLORS_NEON_PALETTE = [
-    "#FF073A", // neon red
-    "#FF6600", // neon orange
-    "#FFFF00", // neon yellow
-    "#39FF14", // neon green
-    "#00FFFF", // neon cyan
-    "#0080FF", // neon blue
-    "#FF00FF", // neon magenta
-    "#FFFF33", // electric lime
-    "#FF1493", // deep pink
-    "#00FF80", // spring green
-];
-
 export const CCOLORS_OCEAN_PALETTE = [
     "#001f3f", // navy
     "#2E86AB", // ocean blue
@@ -78,19 +37,6 @@ export const CCOLORS_DARK_PALETTE = [
     "#95A5A6", // light gray
 ];
 
-export const CCOLORS_EARTH_PALETTE = [
-    "#8B4513", // saddle brown
-    "#CD853F", // peru
-    "#D2691E", // chocolate
-    "#A0522D", // sienna
-    "#228B22", // forest green
-    "#6B8E23", // olive drab
-    "#8FBC8F", // dark sea green
-    "#DEB887", // burlywood
-    "#F5DEB3", // wheat
-    "#D2B48C", // tan
-];
-
 export const CCOLORS_CYBERPUNK_PALETTE = [
     "#0F3460", // dark blue
     "#533483", // dark purple
@@ -120,13 +66,9 @@ export const CWATERMELON_PALETTE = [
 ];
 
 export const COLORS_PALETTES = [
-    CCOLORS_RAINBOW_PALETTE,
-    CCOLORS_PASTEL_PALETTE,
-    CCOLORS_NEON_PALETTE,
     CCOLORS_OCEAN_PALETTE,
     CCOLORS_SUNSET_PALETTE,
     CCOLORS_DARK_PALETTE,
-    CCOLORS_EARTH_PALETTE,
     CCOLORS_CYBERPUNK_PALETTE,
     CCOLORS_MONOCHROME_PALETTE,
     CWATERMELON_PALETTE,

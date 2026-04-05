@@ -1,9 +1,4 @@
-import {
-    TGrid,
-    TGridConfig,
-    TLockedCell,
-    TShapeConfig,
-} from "@/types/TGrid.js";
+import { TGrid, TGridConfig, TPosition, TShapeConfig } from "@/types/TGrid.js";
 import { BaseShape } from "./BaseShape.js";
 import { clamp, randomInt } from "@/utils/UMath.js";
 
@@ -25,8 +20,8 @@ export class SquareShape extends BaseShape {
         y0: number,
         x1: number,
         y1: number,
-    ): TLockedCell[] {
-        const cells: TLockedCell[] = [];
+    ): TPosition[] {
+        const cells: TPosition[] = [];
 
         // Mouvement horizontal
         if (y0 === y1) {
@@ -53,25 +48,25 @@ export class SquareShape extends BaseShape {
         const newY = [1, 3].includes(newDirection)
             ? clamp(
                   this.y +
-                      randomInt(1, gridConfig.nbrColumns / 2 - 1) *
+                      randomInt(1, gridConfig.nbrRows / 2 - 1) *
                           (newDirection === 1 ? -1 : 1),
                   0,
-                  gridConfig.nbrColumns - 1,
+                  gridConfig.nbrRows - 1,
               )
             : this.y;
 
         const newX = [2, 4].includes(newDirection)
             ? clamp(
                   this.x +
-                      randomInt(1, gridConfig.nbrRows / 2 - 1) *
+                      randomInt(1, gridConfig.nbrColumns / 2 - 1) *
                           (newDirection === 2 ? -1 : 1),
                   0,
-                  gridConfig.nbrRows - 1,
+                  gridConfig.nbrColumns - 1,
               )
             : this.x;
 
         if (grid[newY][newX] === null && (newX !== this.x || newY !== this.y)) {
-            this.moveTo(grid, newX, newY);
+            this.moveTo(grid, gridConfig, newX, newY);
         }
     }
 
@@ -93,7 +88,7 @@ export class SquareShape extends BaseShape {
             }
 
             if (this.tailX === this.targetX && this.tailY === this.targetY) {
-                this.onMoveComplete(grid);
+                this.onMoveComplete(grid, this.targetX, this.targetY);
             }
         } else {
             // Example: Move towards target position

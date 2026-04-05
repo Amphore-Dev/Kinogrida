@@ -27,7 +27,10 @@ export const Modal: React.FC<IModalProps> = ({
     >
       <div
         className="modal-overlay absolute inset-0 bg-black opacity-50 z-10"
-        onClick={onClose}
+        onClick={(e) => {
+          e.stopPropagation();
+          onClose();
+        }}
       />
       <div
         className={cn([
@@ -36,7 +39,9 @@ export const Modal: React.FC<IModalProps> = ({
         ])}
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 className={cn(["text-xl", titleClassName])}>{title}</h2>
+        <h2 className={cn(["text-xl leading-none", titleClassName])}>
+          {title}
+        </h2>
         {children}
         <button
           className="border rounded-full w-fit px-4 cursor-pointer"

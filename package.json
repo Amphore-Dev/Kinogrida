@@ -1,6 +1,6 @@
 {
     "name": "@amphore-dev/kinogrida",
-    "version": "0.2.0",
+    "version": "0.3.0",
     "description": "Library for creating animated shape visualizations on canvas.",
     "type": "module",
     "main": "dist/index.js",
@@ -31,7 +31,7 @@
     "bugs": {
         "url": "https://github.com/Amphore-Dev/kinogrida/issues"
     },
-    "homepage": "https://amphore-dev.github.io/kinogrida/",
+    "homepage": "https://amphore-dev.github.io/Kinogrida/",
     "author": "Amphore Development Team",
     "license": "MIT",
     "repository": {
@@ -41,6 +41,7 @@
     "scripts": {
         "build": "tsc && tsc-alias",
         "build:watch": "concurrently \"tsc --watch\" \"tsc-alias --watch\"",
+        "dev": "concurrently --names \"Build,Example\" --colors \"blue,green\" \"npm run build:watch\" \"npm run example\"",
         "test": "jest",
         "test:watch": "jest --watch",
         "test:coverage": "jest --coverage",
@@ -50,7 +51,7 @@
         "format:check": "prettier --check .",
         "clean": "rm -rf dist",
         "prepublishOnly": "npm run clean && npm run build",
-        "example": "npm run build && python3 -m http.server 8000"
+        "example": "cd example && npm run dev"
     },
     "devDependencies": {
         "@eslint/js": "^10.0.1",
