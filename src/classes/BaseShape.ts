@@ -6,10 +6,10 @@ export class BaseShape {
     protected grid: TGrid;
     protected x: number = 0;
     protected y: number = 0;
-    protected speed: number = 0.005;
+    protected speed: number = 0;
+    protected moveDistance: number = 0;
 
     protected lastMoveTime: number = Date.now(); // Randomize initial move debounce time
-    protected moveDuration: number = 1000; // Duration of the move in milliseconds
     protected minBounceTime: number = 0; // Minimum time in seconds before the shape can move again
     protected maxBounceTime: number = 10; // Maximum time in seconds before the shape can move again
     protected moveDebounce: number =
@@ -24,11 +24,13 @@ export class BaseShape {
     protected targetX: number = 0;
     protected targetY: number = 0;
     protected hasReachedTarget: boolean = false;
-    protected hasTailReachedTarget: boolean = false;
 
     protected color: string = "white";
 
     protected lockedCells: TPosition[] = [];
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    #emitter?: (event: string, ...args: any[]) => void;
 
     constructor(
         grid: TGrid,
@@ -68,8 +70,10 @@ export class BaseShape {
         this.tailY = this.y;
         this.originalX = this.x;
         this.originalY = this.y;
+        this.moveDistance = Math.abs(x - this.x) + Math.abs(y - this.y);
         this.isMoving = true;
         this.lastMoveTime = Date.now();
+        this.#emitter?.("moveStart", this, this.x, this.y, x, y);
     }
 
     public genLockPath(
@@ -132,10 +136,17 @@ export class BaseShape {
         grid: TGrid,
         gridConfig: TGridConfig,
         context: CanvasRenderingContext2D,
+        deltaTime: number = 16.67,
     ): void {
         this.grid = grid; // Update the grid reference in case it has changed
+
+        // speed = fraction of each phase (grow/shrink) completed per frame
+        // gridConfig.speed = total animation duration in ms (grow + shrink)
+        this.speed = (2 * deltaTime) / gridConfig.speed;
+
         if (this.isMoving) {
             this.updatePosition(grid);
+            this.#emitter?.("move", this, this.x, this.y);
         } else {
             this.calculateNewTarget(grid, gridConfig);
         }
@@ -165,12 +176,8 @@ export class BaseShape {
         grid[savedY][savedX] = null; // Clear the original position in the grid
         grid[newY][newX] = this;
 
-        const frames = (this.moveDuration / 1000) * 60;
-        const speed = 1 / frames; // toujours en %
-
-        this.speed = speed;
-
         this.hasReachedTarget = false;
+        this.#emitter?.("moveEnd", this, newX, newY);
     }
 
     public unlockGridCells(grid: TGrid): void {
@@ -213,5 +220,10 @@ export class BaseShape {
             const pixelY = y * cellSize + offsetY;
             context.fillRect(pixelX, pixelY, cellSize, cellSize);
         });
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    public setEmitter(emitter: (event: string, ...args: any[]) => void): void {
+        this.#emitter = emitter;
     }
 }

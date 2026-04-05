@@ -20,7 +20,6 @@ export class ArcShape extends BaseShape {
         center: [],
     };
 
-    protected moveDuration = 4000; // Duration of the move in milliseconds
     constructor(
         grid: TGrid,
         x: number = 0,
@@ -135,7 +134,7 @@ export class ArcShape extends BaseShape {
         context.arc(
             startX,
             startY,
-            halfWidth,
+            Math.max(0, halfWidth),
             this.clockwise ? startAngle : startAngle - Math.PI,
             this.clockwise ? startAngle + Math.PI : startAngle,
         );
@@ -146,7 +145,7 @@ export class ArcShape extends BaseShape {
         context.arc(
             endX,
             endY,
-            halfWidth,
+            Math.max(0, halfWidth),
             this.clockwise ? tailAngle - Math.PI : tailAngle,
             this.clockwise ? tailAngle : tailAngle - Math.PI,
         );
@@ -175,6 +174,7 @@ export class ArcShape extends BaseShape {
             !this.clockwise,
         );
         context.stroke();
+        context.closePath();
     }
 
     public drawArc(context: CanvasRenderingContext2D, gridConfig: TGridConfig) {
@@ -197,7 +197,9 @@ export class ArcShape extends BaseShape {
 
     public draw(context: CanvasRenderingContext2D, gridConfig: TGridConfig) {
         this.drawArc(context, gridConfig);
-        if (gridConfig.debug) {
+        const showPath =
+            typeof gridConfig.debug === "object" && gridConfig.debug.showPath;
+        if (showPath) {
             this.drawDebugPath(context);
         }
     }
@@ -248,41 +250,34 @@ export class ArcShape extends BaseShape {
         const { arcCenterX, arcCenterY, arcRadius, endAngle, cellSize } =
             geometry;
 
-        if (
-            !this.hasReachedTarget &&
-            (this.progress >= 1 || this.progress + this.speed >= 1)
-        ) {
-            this.progress = 1;
-            this.hasReachedTarget = true;
-        } else if (
-            this.tailProgress >= 1 ||
-            (this.tailProgress + this.speed >= 1 && this.hasReachedTarget)
-        ) {
-            this.tailProgress = 1;
-            // Calculer la position finale en tenant compte de la direction de rotation
-            const rotationDirection = this.clockwise ? 1 : -1;
-            const rotationAngle = 2 * Math.PI * this.rotationAmount;
-            const finalAngle =
-                endAngle - Math.PI + rotationAngle * rotationDirection;
+        if (this.progress < 1) {
+            this.progress = Math.min(1, this.progress + this.speed);
+            if (this.progress >= 1) {
+                this.hasReachedTarget = true;
+            }
+        } else if (this.tailProgress < 1) {
+            this.tailProgress = Math.min(1, this.tailProgress + this.speed);
+            if (this.tailProgress >= 1) {
+                const rotationDirection = this.clockwise ? 1 : -1;
+                const rotationAngle = 2 * Math.PI * this.rotationAmount;
+                const finalAngle =
+                    endAngle - Math.PI + rotationAngle * rotationDirection;
 
-            const newX = Math.floor(
-                (arcCenterX +
-                    arcRadius * Math.cos(finalAngle) -
-                    geometry.offsetX) /
-                    cellSize,
-            );
-            const newY = Math.floor(
-                (arcCenterY +
-                    arcRadius * Math.sin(finalAngle) -
-                    geometry.offsetY) /
-                    cellSize,
-            );
+                const newX = Math.floor(
+                    (arcCenterX +
+                        arcRadius * Math.cos(finalAngle) -
+                        geometry.offsetX) /
+                        cellSize,
+                );
+                const newY = Math.floor(
+                    (arcCenterY +
+                        arcRadius * Math.sin(finalAngle) -
+                        geometry.offsetY) /
+                        cellSize,
+                );
 
-            this.onMoveComplete(this.grid, newX, newY);
-        } else if (this.progress < 1) {
-            this.progress += this.speed;
-        } else if (this.progress >= 1 && this.tailProgress < 1) {
-            this.tailProgress += this.speed;
+                this.onMoveComplete(this.grid, newX, newY);
+            }
         }
     }
 
@@ -290,9 +285,6 @@ export class ArcShape extends BaseShape {
         super.onMoveComplete(grid, newX, newY);
         this.progress = 0;
         this.tailProgress = 0;
-        this.isMoving = false;
-        this.hasReachedTarget = true;
-        this.hasTailReachedTarget = true;
     }
 
     protected calculateNewTarget(grid: TGrid, gridConfig: TGridConfig): void {
@@ -346,11 +338,6 @@ export class ArcShape extends BaseShape {
             this.clockwise = newClockwise;
             this.rotationAmount = newRotationAmount;
 
-            const frames = (this.moveDuration / 1000) * 60;
-            const speed = 1 / frames; // toujours en %
-
-            this.speed = speed;
-
             this.moveTo(grid, gridConfig, endX, endY);
         }
     }
@@ -401,7 +388,10 @@ export class ArcShape extends BaseShape {
             return true;
         };
 
-        if (gridConfig.debug) this.resetDebugPath();
+        const showPath =
+            typeof gridConfig.debug === "object" && gridConfig.debug.showPath;
+
+        if (showPath) this.resetDebugPath();
 
         for (let i = 0; i <= steps; i++) {
             const progress = i / steps;
@@ -415,22 +405,20 @@ export class ArcShape extends BaseShape {
             const centerX = arcCenterX + arcRadius * Math.cos(angle);
             const centerY = arcCenterY + arcRadius * Math.sin(angle);
 
-            if (gridConfig.debug)
+            if (showPath)
                 this.debugPath.center.push({ x: centerX, y: centerY });
 
             const innerRadius = Math.max(0.001, arcRadius - halfWidth);
             const innerX = arcCenterX + innerRadius * Math.cos(angle);
             const innerY = arcCenterY + innerRadius * Math.sin(angle);
 
-            if (gridConfig.debug)
-                this.debugPath.inner.push({ x: innerX, y: innerY });
+            if (showPath) this.debugPath.inner.push({ x: innerX, y: innerY });
 
             const outerRadius = arcRadius + halfWidth;
             const outerX = arcCenterX + outerRadius * Math.cos(angle);
             const outerY = arcCenterY + outerRadius * Math.sin(angle);
 
-            if (gridConfig.debug)
-                this.debugPath.outer.push({ x: outerX, y: outerY });
+            if (showPath) this.debugPath.outer.push({ x: outerX, y: outerY });
 
             const checkCenter = addPoint(centerX, centerY);
             const checkInner = addPoint(innerX, innerY);
@@ -438,7 +426,7 @@ export class ArcShape extends BaseShape {
 
             if (!checkCenter || !checkInner || !checkOuter) {
                 // Si l'une des positions n'est pas valide, arrêter de générer le chemin
-                if (gridConfig.debug) this.resetDebugPath();
+                if (showPath) this.resetDebugPath();
                 return false;
             }
         }

@@ -71,18 +71,18 @@ export class SquareShape extends BaseShape {
     }
 
     protected updatePosition(grid: TGrid): void {
+        // Position increment per frame, scaled by distance so total duration is constant
+        const step = this.speed * this.moveDistance;
+
         if (this.hasReachedTarget) {
-            // Check if the item has reached its target position
-            if (Math.abs(this.tailX - this.targetX) > this.speed) {
-                this.tailX +=
-                    this.tailX < this.targetX ? this.speed : -this.speed;
+            if (Math.abs(this.tailX - this.targetX) > step) {
+                this.tailX += this.tailX < this.targetX ? step : -step;
             } else {
                 this.tailX = this.targetX;
             }
 
-            if (Math.abs(this.tailY - this.targetY) > this.speed) {
-                this.tailY +=
-                    this.tailY < this.targetY ? this.speed : -this.speed;
+            if (Math.abs(this.tailY - this.targetY) > step) {
+                this.tailY += this.tailY < this.targetY ? step : -step;
             } else {
                 this.tailY = this.targetY;
             }
@@ -91,20 +91,18 @@ export class SquareShape extends BaseShape {
                 this.onMoveComplete(grid, this.targetX, this.targetY);
             }
         } else {
-            // Example: Move towards target position
-            if (Math.abs(this.x - this.targetX) > this.speed) {
-                this.x += this.x < this.targetX ? this.speed : -this.speed;
+            if (Math.abs(this.x - this.targetX) > step) {
+                this.x += this.x < this.targetX ? step : -step;
             } else {
                 this.x = this.targetX;
             }
 
-            if (Math.abs(this.y - this.targetY) > this.speed) {
-                this.y += this.y < this.targetY ? this.speed : -this.speed;
+            if (Math.abs(this.y - this.targetY) > step) {
+                this.y += this.y < this.targetY ? step : -step;
             } else {
                 this.y = this.targetY;
             }
 
-            // Check if the item has reached its target position
             if (this.x === this.targetX && this.y === this.targetY) {
                 this.hasReachedTarget = true;
             }
@@ -132,58 +130,25 @@ export class SquareShape extends BaseShape {
 
         context.lineWidth = gridConfig.lineWidth;
         context.strokeStyle = this.color;
-        this.strokeRoundedRect(
-            context,
+        context.beginPath();
+        context.roundRect(
             startX,
             startY,
             rectWidth,
             rectHeight,
-            this.radiusPercent,
+            this.radiusPercent * cellSize,
         );
+        context.stroke();
 
         context.strokeStyle = "white";
-        this.strokeRoundedRect(
-            context,
+        context.beginPath();
+        context.roundRect(
             startX + cellSize * 0.2,
             startY + cellSize * 0.2,
             rectWidth - cellSize * 0.4,
             rectHeight - cellSize * 0.4,
-            this.radiusPercent,
+            (this.radiusPercent / 2) * cellSize,
         );
-    }
-
-    public strokeRoundedRect(
-        context: CanvasRenderingContext2D,
-        x: number,
-        y: number,
-        width: number,
-        height: number,
-        radiusPercent: number = 0,
-    ) {
-        // Calculer le rayon réel basé sur le pourcentage et la plus petite dimension
-        const minDimension = Math.min(width, height);
-        const radius = Math.min(
-            (minDimension * Math.max(0, Math.min(100, radiusPercent))) / 200,
-            minDimension / 2,
-        );
-
-        context.beginPath();
-        context.moveTo(x + radius, y);
-        context.lineTo(x + width - radius, y);
-        context.arcTo(x + width, y, x + width, y + radius, radius);
-        context.lineTo(x + width, y + height - radius);
-        context.arcTo(
-            x + width,
-            y + height,
-            x + width - radius,
-            y + height,
-            radius,
-        );
-        context.lineTo(x + radius, y + height);
-        context.arcTo(x, y + height, x, y + height - radius, radius);
-        context.lineTo(x, y + radius);
-        context.arcTo(x, y, x + radius, y, radius);
-        context.closePath();
         context.stroke();
     }
 }

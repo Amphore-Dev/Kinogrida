@@ -1,4 +1,5 @@
 import { BaseShape } from "@/classes/BaseShape.js";
+import { TEngineOptions } from "./TKinogrida.js";
 
 export type TPosition = {
     x: number;
@@ -9,18 +10,11 @@ export type TGridCell = BaseShape | "locked" | null;
 
 export type TGrid = TGridCell[][];
 
-export type TGridConfig = {
-    nbrColumns: number;
-    nbrRows: number;
-    cellSize: number;
-    gridMargin: number;
+export type TGridConfig = TEngineOptions & {
     offsetX: number;
     offsetY: number;
     width: number;
     height: number;
-    lineWidth: number;
-    debug: boolean;
-    context: CanvasRenderingContext2D;
     colors: string[];
 };
 

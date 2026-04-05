@@ -1,6 +1,6 @@
 {
     "name": "@amphore-dev/kinogrida",
-    "version": "0.3.1",
+    "version": "0.4.0",
     "description": "Library for creating animated shape visualizations on canvas.",
     "type": "module",
     "main": "dist/index.js",

@@ -7,7 +7,7 @@
 
 @font-face {
   font-family: "neon";
-  src: url("./fonts/NeoNeon-Light.otf") format("opentype");
+  src: url("./assets/fonts/NeoNeon-Light.otf") format("opentype");
   font-weight: normal;
   font-style: normal;
 }

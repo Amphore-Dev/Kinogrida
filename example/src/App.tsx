@@ -1,12 +1,104 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Kinogrida } from "@amphore-dev/kinogrida";
+import {
+  CDEFAULT_GRID_CONFIG,
+  Kinogrida,
+  SHAPES_TYPES,
+} from "@amphore-dev/kinogrida";
 import { Modal } from "./components/Modal";
 import { Key } from "./components/Key";
+import { folder, useControls } from "leva";
 
 function App() {
-  const [isModalOpen, setIsModalOpen] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(
+    import.meta.env.MODE !== "development"
+  );
+
+  const initialColumns = Math.floor(window.innerWidth / 100);
+  const initialRows = Math.floor(window.innerHeight / 100);
+
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const engineRef = useRef<Kinogrida | null>(null);
+
+  const {
+    isPlaying,
+    radiusPercent,
+    fillPercentage,
+    color,
+    type,
+    showGrid,
+    showStats,
+    showLockedCells,
+    showPath,
+    showPosition,
+    showAll,
+    speed,
+    nbrColumns,
+    nbrRows,
+    showMouseHighlight,
+  } = useControls({
+    State: folder({
+      isPlaying: true,
+      showMouseHighlight: true,
+    }),
+    "Shape Add": folder(
+      {
+        type: { value: "square", options: Object.keys(SHAPES_TYPES) },
+        radiusPercent: {
+          value: 0,
+          min: 0,
+          max: 1,
+          step: 0.01,
+        },
+        color: "#ff0000",
+      },
+      { collapsed: false }
+    ),
+    Grid: folder(
+      {
+        speed: {
+          value: CDEFAULT_GRID_CONFIG.speed,
+          min: 100,
+          max: 60000,
+          step: 100,
+        },
+        fillPercentage: {
+          value: 0.2,
+          min: 0.01,
+          max: 1,
+          step: 0.01,
+        },
+        size: folder({
+          nbrColumns: {
+            value: initialColumns,
+            min: 1,
+            max: 100,
+            step: 1,
+          },
+          nbrRows: {
+            value: initialRows,
+            min: 1,
+            max: 100,
+            step: 1,
+          },
+        }),
+      },
+      {
+        collapsed: false,
+      }
+    ),
+
+    Debug: folder(
+      {
+        showAll: false,
+        showGrid: false,
+        showStats: false,
+        showLockedCells: false,
+        showPath: false,
+        showPosition: false,
+      },
+      { collapsed: true }
+    ),
+  });
 
   const toggleFullScreen = () => {
     if (!document.fullscreenElement) {
@@ -18,74 +110,120 @@ function App() {
     }
   };
 
-  const handleKeyDown = (e: KeyboardEvent) => {
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
     const key = e.key.toLowerCase();
     if (key === "f") {
       toggleFullScreen();
     } else if (key === "d" && e.shiftKey) {
       engineRef.current?.toggleDebugMode();
     }
-  };
+  }, []);
 
-  const initGrid = () => {
-    engineRef.current?.initGrid();
-  };
+  const shapeConfigRef = useRef({ color, type, radiusPercent });
+  useEffect(() => {
+    shapeConfigRef.current = { color, type, radiusPercent };
+  }, [color, type, radiusPercent]);
 
-  const handeScroll = useCallback(
-    (e: WheelEvent) => {
-      let newFillPercentage;
+  const handleCellClick = useCallback(
+    (x: number, y: number, isValid: boolean) => {
+      if (!engineRef.current || !isValid) return;
 
-      if (isModalOpen || !engineRef.current) return;
-
-      if (e.deltaY < 0) {
-        newFillPercentage = Math.min(
-          1,
-          engineRef.current?.getFillPercentage() + 0.005
-        );
-      } else {
-        newFillPercentage = Math.max(
-          0,
-          engineRef.current?.getFillPercentage() - 0.005
-        );
-      }
-
-      newFillPercentage = Math.max(0.01, newFillPercentage);
-      if (newFillPercentage !== engineRef.current?.getFillPercentage()) {
-        engineRef.current?.setFillPercentage(newFillPercentage);
-      }
+      const { color, type, radiusPercent } = shapeConfigRef.current;
+      engineRef.current.addCell(type, x, y, {
+        color,
+        radiusPercent: radiusPercent / 2,
+      });
     },
-    [isModalOpen, engineRef]
+    []
   );
+
+  useEffect(() => {
+    if (!engineRef.current) return;
+
+    if (isPlaying) {
+      engineRef.current?.play();
+    } else {
+      engineRef.current?.pause();
+    }
+  }, [isPlaying]);
+
+  useEffect(() => {
+    if (engineRef.current) {
+      engineRef.current.toggleDebugMode(
+        showAll
+          ? true
+          : {
+              showGrid,
+              showStats,
+              showLockedCells,
+              showPath,
+              showPosition,
+            }
+      );
+    }
+  }, [showGrid, showStats, showLockedCells, showPath, showPosition, showAll]);
+
+  useEffect(() => {
+    if (engineRef.current) {
+      engineRef.current.setFillPercentage(fillPercentage);
+    }
+  }, [fillPercentage]);
+
+  useEffect(() => {
+    if (engineRef.current) {
+      engineRef.current.setSpeed(speed);
+    }
+  }, [speed]);
+
+  useEffect(() => {
+    if (engineRef.current) {
+      engineRef.current.setConfig({
+        showMouseHighlight,
+      });
+    }
+  }, [showMouseHighlight]);
+
+  useEffect(() => {
+    if (engineRef.current) {
+      engineRef.current.setConfig(
+        {
+          nbrColumns,
+          nbrRows,
+        },
+        true
+      );
+    }
+  }, [nbrColumns, nbrRows]);
 
   useEffect(() => {
     if (!canvasRef.current) {
       return;
     }
     // Initialize ShadesEngine with custom shape
-    const engine = new Kinogrida(canvasRef.current);
+    engineRef.current = new Kinogrida(canvasRef.current, {
+      showMouseHighlight: true,
+    });
 
-    engineRef.current = engine;
-
-    engine.play();
+    engineRef.current.on("cellClick", handleCellClick);
+    engineRef.current.play();
 
     return () => {
       if (engineRef.current) {
         engineRef.current.destroy();
+        engineRef.current = null;
       }
     };
-  }, []);
+  }, [handleCellClick]);
 
   useEffect(() => {
     window.addEventListener("keydown", handleKeyDown);
-    window.addEventListener("click", initGrid);
-    window.addEventListener("wheel", handeScroll);
+
     // Cleanup
+
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
-      window.removeEventListener("click", initGrid);
-      window.removeEventListener("wheel", handeScroll);
     };
-  }, [handeScroll, isModalOpen, engineRef, handleKeyDown]);
+  }, [handleKeyDown]);
   return (
     <div className="App">
       {/* Canvas */}
@@ -107,15 +245,7 @@ function App() {
               <td className="justify-items-right">
                 <Key value="Click" square={false} />
               </td>
-              <td className="text-left">Reset grid / Change color</td>
-            </tr>
-            <tr>
-              <td className="justify-items-right">
-                <Key value="Wheel" square={false} />
-              </td>
-              <td className="text-left">
-                Increase/Decrease the amount of shapes
-              </td>
+              <td className="text-left">Add a cell</td>
             </tr>
             <tr>
               <td className="justify-items-right ">
