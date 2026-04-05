@@ -1,104 +1,16 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import {
-  CDEFAULT_GRID_CONFIG,
-  Kinogrida,
-  SHAPES_TYPES,
-} from "@amphore-dev/kinogrida";
+import { Kinogrida } from "@amphore-dev/kinogrida";
 import { Modal } from "./components/Modal";
 import { Key } from "./components/Key";
-import { folder, useControls } from "leva";
+import { LevaControls } from "./components/LevaControls";
 
 function App() {
   const [isModalOpen, setIsModalOpen] = useState(
     import.meta.env.MODE !== "development"
   );
 
-  const initialColumns = Math.floor(window.innerWidth / 100);
-  const initialRows = Math.floor(window.innerHeight / 100);
-
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const engineRef = useRef<Kinogrida | null>(null);
-
-  const {
-    isPlaying,
-    radiusPercent,
-    fillPercentage,
-    color,
-    type,
-    showGrid,
-    showStats,
-    showLockedCells,
-    showPath,
-    showPosition,
-    showAll,
-    speed,
-    nbrColumns,
-    nbrRows,
-    showMouseHighlight,
-  } = useControls({
-    State: folder({
-      isPlaying: true,
-      showMouseHighlight: true,
-    }),
-    "Shape Add": folder(
-      {
-        type: { value: "square", options: Object.keys(SHAPES_TYPES) },
-        radiusPercent: {
-          value: 0,
-          min: 0,
-          max: 1,
-          step: 0.01,
-        },
-        color: "#ff0000",
-      },
-      { collapsed: false }
-    ),
-    Grid: folder(
-      {
-        speed: {
-          value: CDEFAULT_GRID_CONFIG.speed,
-          min: 100,
-          max: 60000,
-          step: 100,
-        },
-        fillPercentage: {
-          value: 0.2,
-          min: 0.01,
-          max: 1,
-          step: 0.01,
-        },
-        size: folder({
-          nbrColumns: {
-            value: initialColumns,
-            min: 1,
-            max: 100,
-            step: 1,
-          },
-          nbrRows: {
-            value: initialRows,
-            min: 1,
-            max: 100,
-            step: 1,
-          },
-        }),
-      },
-      {
-        collapsed: false,
-      }
-    ),
-
-    Debug: folder(
-      {
-        showAll: false,
-        showGrid: false,
-        showStats: false,
-        showLockedCells: false,
-        showPath: false,
-        showPosition: false,
-      },
-      { collapsed: true }
-    ),
-  });
 
   const toggleFullScreen = () => {
     if (!document.fullscreenElement) {
@@ -119,92 +31,14 @@ function App() {
     }
   }, []);
 
-  const shapeConfigRef = useRef({ color, type, radiusPercent });
-  useEffect(() => {
-    shapeConfigRef.current = { color, type, radiusPercent };
-  }, [color, type, radiusPercent]);
-
-  const handleCellClick = useCallback(
-    (x: number, y: number, isValid: boolean) => {
-      if (!engineRef.current || !isValid) return;
-
-      const { color, type, radiusPercent } = shapeConfigRef.current;
-      engineRef.current.addCell(type, x, y, {
-        color,
-        radiusPercent: radiusPercent / 2,
-      });
-    },
-    []
-  );
-
-  useEffect(() => {
-    if (!engineRef.current) return;
-
-    if (isPlaying) {
-      engineRef.current?.play();
-    } else {
-      engineRef.current?.pause();
-    }
-  }, [isPlaying]);
-
-  useEffect(() => {
-    if (engineRef.current) {
-      engineRef.current.toggleDebugMode(
-        showAll
-          ? true
-          : {
-              showGrid,
-              showStats,
-              showLockedCells,
-              showPath,
-              showPosition,
-            }
-      );
-    }
-  }, [showGrid, showStats, showLockedCells, showPath, showPosition, showAll]);
-
-  useEffect(() => {
-    if (engineRef.current) {
-      engineRef.current.setFillPercentage(fillPercentage);
-    }
-  }, [fillPercentage]);
-
-  useEffect(() => {
-    if (engineRef.current) {
-      engineRef.current.setSpeed(speed);
-    }
-  }, [speed]);
-
-  useEffect(() => {
-    if (engineRef.current) {
-      engineRef.current.setConfig({
-        showMouseHighlight,
-      });
-    }
-  }, [showMouseHighlight]);
-
-  useEffect(() => {
-    if (engineRef.current) {
-      engineRef.current.setConfig(
-        {
-          nbrColumns,
-          nbrRows,
-        },
-        true
-      );
-    }
-  }, [nbrColumns, nbrRows]);
-
   useEffect(() => {
     if (!canvasRef.current) {
       return;
     }
-    // Initialize ShadesEngine with custom shape
     engineRef.current = new Kinogrida(canvasRef.current, {
       showMouseHighlight: true,
     });
 
-    engineRef.current.on("cellClick", handleCellClick);
     engineRef.current.play();
 
     return () => {
@@ -213,7 +47,7 @@ function App() {
         engineRef.current = null;
       }
     };
-  }, [handleCellClick]);
+  }, []);
 
   useEffect(() => {
     window.addEventListener("keydown", handleKeyDown);
@@ -226,7 +60,9 @@ function App() {
   }, [handleKeyDown]);
   return (
     <div className="App">
-      {/* Canvas */}
+      {!isModalOpen && (
+        <LevaControls engineRef={engineRef} hidden={isModalOpen} />
+      )}
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}

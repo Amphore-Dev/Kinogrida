@@ -19,3 +19,8 @@
 .justify-items-right {
   justify-items: right;
 }
+
+#leva__root {
+  position: relative;
+  z-index: 1;
+}
