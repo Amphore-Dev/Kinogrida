@@ -3,17 +3,17 @@ import {
     TGridConfig,
     TPosition,
     TShapeConfig,
+    TShapeConstructor,
 } from "@/types/TGrid.js";
 import { BaseShape } from "./BaseShape.js";
 import { randomInt } from "@/utils/UMath.js";
 import { getRandomColorPalette } from "@/utils/UColors.js";
-import { getRandomShapeType } from "@/utils/UShapes.js";
 import {
     TDebugOptions,
     TEngineOptions,
     TKinogridaEventMap,
 } from "@/types/TKinogrida.js";
-import { SHAPES_TYPES, TShapeType } from "@/constants/CShapes.js";
+import { SHAPES_TYPES } from "@/constants/CShapes.js";
 import { CDEFAULT_GRID_CONFIG } from "@/constants/CKinogrida.js";
 
 export class Kinogrida {
@@ -54,6 +54,9 @@ export class Kinogrida {
     #cells: BaseShape[] = [];
     #fillPercentage: number = 0.2;
 
+    // ── Shapes ──────────────────────────────────────────────
+    #shapesTypes: Record<string, TShapeConstructor>;
+
     // ── Input ───────────────────────────────────────────────
     #mouseOverCell: TPosition | null = null;
     #engineOptions: Partial<TEngineOptions>;
@@ -78,6 +81,7 @@ export class Kinogrida {
     constructor(canvas: HTMLCanvasElement, options: Partial<TGridConfig> = {}) {
         this.#canvas = canvas;
         this.#engineOptions = options;
+        this.#shapesTypes = { ...SHAPES_TYPES, ...options.customShapes };
 
         const context = canvas.getContext("2d");
         if (!context) {
@@ -116,7 +120,12 @@ export class Kinogrida {
 
     public destroy(): void {
         this.pause();
-        this.#context.clearRect(0, 0, this.#canvas.width, this.#canvas.height);
+        this.#context.clearRect(
+            0,
+            0,
+            this.#canvas.clientWidth,
+            this.#canvas.clientHeight,
+        );
         this.#detachEventListeners();
     }
 
@@ -163,7 +172,7 @@ export class Kinogrida {
             const y = randomInt(0, nbrRows - 1);
 
             if (this.#grid[y][x] === null) {
-                const ShapeConstructor = getRandomShapeType();
+                const ShapeConstructor = this.#getRandomShapeType();
                 this.addCell(
                     new ShapeConstructor(this.#grid, x, y, {
                         color: colors[randomInt(0, colors.length - 1)],
@@ -181,26 +190,32 @@ export class Kinogrida {
     }
 
     public addCell(
-        item: BaseShape | TShapeType,
+        item: BaseShape | string,
         x: number,
         y: number,
         config?: TShapeConfig,
     ): void {
+        let shape: BaseShape;
         if (typeof item === "string") {
-            const ShapeConstructor = SHAPES_TYPES[item];
-            item = new ShapeConstructor(this.#grid, x, y, {
+            const ShapeConstructor = this.#shapesTypes[item];
+            if (!ShapeConstructor) {
+                throw new Error(`Unknown shape type: "${item}"`);
+            }
+            shape = new ShapeConstructor(this.#grid, x, y, {
                 color: this.#gridConfig.colors[
                     randomInt(0, this.#gridConfig.colors.length - 1)
                 ],
                 radiusPercent: Math.random() < 0.5 ? 1 : 0,
                 ...config,
             });
+        } else {
+            shape = item;
         }
 
         if (this.#grid[y][x] === null) {
-            this.#grid[y][x] = item;
-            this.#cells.push(item);
-            (item as BaseShape).setEmitter((event, ...args) => {
+            this.#grid[y][x] = shape;
+            this.#cells.push(shape);
+            shape.setEmitter((event, ...args) => {
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 (this.#emit as (event: string, ...args: any[]) => void)(
                     event,
@@ -221,17 +236,20 @@ export class Kinogrida {
             ...config,
         };
 
+        const canvasWidth = this.#canvas.clientWidth;
+        const canvasHeight = this.#canvas.clientHeight;
+
         const cellSize = Math.floor(
             Math.min(
-                (this.#canvas.width - 2 * gridMargin) / nbrColumns,
-                (this.#canvas.height - 2 * gridMargin) / nbrRows,
+                (canvasWidth - 2 * gridMargin) / nbrColumns,
+                (canvasHeight - 2 * gridMargin) / nbrRows,
             ),
         );
 
         const gridWidth = nbrColumns * cellSize;
         const gridHeight = nbrRows * cellSize;
-        const offsetX = (this.#canvas.width - gridWidth) / 2;
-        const offsetY = (this.#canvas.height - gridHeight) / 2;
+        const offsetX = (canvasWidth - gridWidth) / 2;
+        const offsetY = (canvasHeight - gridHeight) / 2;
         const lineWidth = Math.max(1, Math.floor(cellSize * 0.1));
         const colors = config.colors || getRandomColorPalette();
 
@@ -243,10 +261,10 @@ export class Kinogrida {
             context: this.#context,
             colors,
             ...config,
-            offsetX,
-            offsetY,
             width: gridWidth,
             height: gridHeight,
+            offsetX,
+            offsetY,
         };
     }
 
@@ -345,6 +363,11 @@ export class Kinogrida {
     //  Private – Setup
     // ════════════════════════════════════════════════════════
 
+    #getRandomShapeType(): TShapeConstructor {
+        const keys = Object.keys(this.#shapesTypes);
+        return this.#shapesTypes[keys[randomInt(0, keys.length - 1)]];
+    }
+
     #setupCanvas(options: Partial<TGridConfig>): void {
         this.#setCanvasSize();
         this.#attachEventListeners();
@@ -353,15 +376,12 @@ export class Kinogrida {
     }
 
     #setCanvasSize(): void {
-        this.#canvas.width = this.#canvas.clientWidth;
-        this.#canvas.height = this.#canvas.clientHeight;
-
         const dpr = window.devicePixelRatio || 1;
 
         this.#canvas.width = this.#canvas.clientWidth * dpr;
         this.#canvas.height = this.#canvas.clientHeight * dpr;
 
-        this.#context.scale(dpr, dpr);
+        this.#context.setTransform(dpr, 0, 0, dpr, 0, 0);
     }
 
     #attachEventListeners(): void {
@@ -406,7 +426,12 @@ export class Kinogrida {
         }
         this.#lastFrameTime = currentTime;
 
-        this.#context.clearRect(0, 0, this.#canvas.width, this.#canvas.height);
+        this.#context.clearRect(
+            0,
+            0,
+            this.#canvas.clientWidth,
+            this.#canvas.clientHeight,
+        );
 
         this.#drawMouseOverHighlight();
         const dbg = this.#debugOptions;

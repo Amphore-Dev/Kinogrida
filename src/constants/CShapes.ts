@@ -1,10 +1,10 @@
 import { ArcShape } from "@/classes/ArcShape.js";
-import { BaseShape } from "@/classes/BaseShape.js";
 import { SquareShape } from "@/classes/SquareShape.js";
+import { TShapeConstructor } from "@/types/TGrid.js";
 
-export const SHAPES_TYPES: Record<string, typeof BaseShape> = {
+export const SHAPES_TYPES: Record<string, TShapeConstructor> = {
     arc: ArcShape,
     square: SquareShape,
 };
 
-export type TShapeType = keyof typeof SHAPES_TYPES;
+export type TShapeType = string;

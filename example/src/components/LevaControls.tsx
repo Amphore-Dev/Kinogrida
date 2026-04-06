@@ -6,38 +6,56 @@ import {
 } from "@amphore-dev/kinogrida";
 import { button, folder, Leva, useControls } from "leva";
 
-const initialColumns = Math.floor(window.innerWidth / 100);
-const initialRows = Math.floor(window.innerHeight / 100);
+const STORAGE_KEY = "kinogrida-leva-controls";
+
+function loadSavedControls(): Record<string, unknown> {
+  try {
+    const raw = sessionStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+}
+
+const saved = loadSavedControls();
+
+const initialColumns =
+  (saved.nbrColumns as number) ?? Math.floor(window.innerWidth / 100);
+const initialRows =
+  (saved.nbrRows as number) ?? Math.floor(window.innerHeight / 100);
 
 function useLevaControls() {
   return useControls({
     State: folder({
-      isPlaying: true,
-      showMouseHighlight: true,
+      isPlaying: (saved.isPlaying as boolean) ?? true,
+      showMouseHighlight: (saved.showMouseHighlight as boolean) ?? true,
     }),
     "Shape Add": folder(
       {
-        type: { value: "square", options: Object.keys(SHAPES_TYPES) },
+        type: {
+          value: (saved.type as string) ?? "square",
+          options: [...Object.keys(SHAPES_TYPES), "diamond"],
+        },
         radiusPercent: {
-          value: 0,
+          value: (saved.radiusPercent as number) ?? 0,
           min: 0,
           max: 1,
           step: 0.01,
         },
-        color: "#ff0000",
+        color: (saved.color as string) ?? "#ff0000",
       },
       { collapsed: false }
     ),
     Grid: folder(
       {
         speed: {
-          value: CDEFAULT_GRID_CONFIG.speed,
+          value: (saved.speed as number) ?? CDEFAULT_GRID_CONFIG.speed,
           min: 100,
           max: 60000,
           step: 100,
         },
         fillPercentage: {
-          value: 0.2,
+          value: (saved.fillPercentage as number) ?? 0.2,
           min: 0.01,
           max: 1,
           step: 0.01,
@@ -64,12 +82,12 @@ function useLevaControls() {
 
     Debug: folder(
       {
-        showAll: false,
-        showGrid: false,
-        showStats: false,
-        showLockedCells: false,
-        showPath: false,
-        showPosition: false,
+        showAll: (saved.showAll as boolean) ?? false,
+        showGrid: (saved.showGrid as boolean) ?? false,
+        showStats: (saved.showStats as boolean) ?? false,
+        showLockedCells: (saved.showLockedCells as boolean) ?? false,
+        showPath: (saved.showPath as boolean) ?? false,
+        showPosition: (saved.showPosition as boolean) ?? false,
       },
       { collapsed: true }
     ),
@@ -106,6 +124,11 @@ function useLevaEffects(engineRef: React.RefObject<Kinogrida | null>) {
     nbrRows,
     showMouseHighlight,
   } = controls;
+
+  // Persist all control values to sessionStorage
+  useEffect(() => {
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(controls));
+  }, [controls]);
 
   const shapeConfigRef = useRef({ color, type, radiusPercent });
   useEffect(() => {
@@ -196,6 +219,7 @@ function useLevaEffects(engineRef: React.RefObject<Kinogrida | null>) {
 
 export function LevaControls({
   engineRef,
+  hidden,
 }: {
   engineRef: React.RefObject<Kinogrida | null>;
   hidden?: boolean;
@@ -211,5 +235,5 @@ export function LevaControls({
     };
   }, [handleCellClick, engineRef]);
 
-  return <Leva />;
+  return <Leva hidden={hidden} />;
 }

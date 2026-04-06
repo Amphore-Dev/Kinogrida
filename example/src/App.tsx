@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Kinogrida } from "@amphore-dev/kinogrida";
+import { DiamondShape } from "./classes/DiamondShape";
 import { Modal } from "./components/Modal";
 import { Key } from "./components/Key";
 import { LevaControls } from "./components/LevaControls";
@@ -9,8 +10,26 @@ function App() {
     import.meta.env.MODE !== "development"
   );
 
-  const canvasRef = useRef<HTMLCanvasElement>(null);
   const engineRef = useRef<Kinogrida | null>(null);
+  const [isEngineReady, setIsEngineReady] = useState(false);
+
+  const canvasRefCallback = useCallback((canvas: HTMLCanvasElement | null) => {
+    if (!canvas) return;
+
+    const engine = new Kinogrida(canvas, {
+      showMouseHighlight: true,
+      customShapes: { diamond: DiamondShape },
+    });
+    engineRef.current = engine;
+    engine.play();
+    setIsEngineReady(true);
+
+    return () => {
+      engine.destroy();
+      engineRef.current = null;
+      setIsEngineReady(false);
+    };
+  }, []);
 
   const toggleFullScreen = () => {
     if (!document.fullscreenElement) {
@@ -32,35 +51,15 @@ function App() {
   }, []);
 
   useEffect(() => {
-    if (!canvasRef.current) {
-      return;
-    }
-    engineRef.current = new Kinogrida(canvasRef.current, {
-      showMouseHighlight: true,
-    });
-
-    engineRef.current.play();
-
-    return () => {
-      if (engineRef.current) {
-        engineRef.current.destroy();
-        engineRef.current = null;
-      }
-    };
-  }, []);
-
-  useEffect(() => {
     window.addEventListener("keydown", handleKeyDown);
-
-    // Cleanup
-
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, [handleKeyDown]);
+
   return (
     <div className="App">
-      {!isModalOpen && (
+      {isEngineReady && (
         <LevaControls engineRef={engineRef} hidden={isModalOpen} />
       )}
       <Modal
@@ -93,7 +92,7 @@ function App() {
         </table>
       </Modal>
       <canvas
-        ref={canvasRef}
+        ref={canvasRefCallback}
         className="absolute inset-0 w-full h-full"
         style={{
           background: "black",

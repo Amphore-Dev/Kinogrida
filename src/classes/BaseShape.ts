@@ -2,12 +2,15 @@ import { TGrid, TGridConfig, TPosition, TShapeConfig } from "@/types/TGrid.js";
 import { hexToRGBA } from "@/utils/UColors.js";
 import { random } from "@/utils/UMath.js";
 
-export class BaseShape {
+export abstract class BaseShape {
     protected grid: TGrid;
     protected x: number = 0;
     protected y: number = 0;
     protected speed: number = 0;
     protected moveDistance: number = 0;
+
+    protected progress = 0;
+    protected tailProgress = 0;
 
     protected lastMoveTime: number = Date.now(); // Randomize initial move debounce time
     protected minBounceTime: number = 0; // Minimum time in seconds before the shape can move again
@@ -28,6 +31,16 @@ export class BaseShape {
     protected color: string = "white";
 
     protected lockedCells: TPosition[] = [];
+
+    protected debugPath: {
+        inner: TPosition[];
+        outer: TPosition[];
+        center: TPosition[];
+    } = {
+        inner: [],
+        outer: [],
+        center: [],
+    };
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     #emitter?: (event: string, ...args: any[]) => void;
@@ -153,12 +166,12 @@ export class BaseShape {
         this.draw(context, gridConfig);
     }
 
-    protected calculateNewTarget(
-        _grid: TGrid,
-        _gridConfig: TGridConfig,
-    ): void {}
+    protected abstract calculateNewTarget(
+        grid: TGrid,
+        gridConfig: TGridConfig,
+    ): void;
 
-    protected updatePosition(_grid: TGrid): void {}
+    protected abstract updatePosition(grid: TGrid): void;
 
     protected onMoveComplete(grid: TGrid, newX: number, newY: number): void {
         const savedX = this.originalX;
@@ -189,7 +202,10 @@ export class BaseShape {
         this.lockedCells = [];
     }
 
-    public draw(_context: CanvasRenderingContext2D, _gridConfig: TGridConfig) {}
+    public abstract draw(
+        context: CanvasRenderingContext2D,
+        gridConfig: TGridConfig,
+    ): void;
 
     public drawLockedCells(
         context: CanvasRenderingContext2D,
@@ -213,6 +229,13 @@ export class BaseShape {
             cellSize,
             cellSize,
         );
+        context.fillStyle = "rgba(255, 0, 255, 0.2)"; // Magenta with transparency
+        context.fillRect(
+            this.targetX * cellSize + offsetX,
+            this.targetY * cellSize + offsetY,
+            cellSize,
+            cellSize,
+        );
 
         context.fillStyle = rgbColor; // Red with transparency
         this.lockedCells.forEach(({ x, y }) => {
@@ -225,5 +248,61 @@ export class BaseShape {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     public setEmitter(emitter: (event: string, ...args: any[]) => void): void {
         this.#emitter = emitter;
+    }
+
+    protected isValidGridPosition(x: number, y: number, grid: TGrid): boolean {
+        return y >= 0 && y < grid.length && x >= 0 && x < grid[0].length;
+    }
+
+    protected resetDebugPath() {
+        this.debugPath = {
+            inner: [],
+            outer: [],
+            center: [],
+        };
+    }
+
+    protected drawDebugPath(context: CanvasRenderingContext2D) {
+        if (!this.debugPath || !this.isMoving) return;
+
+        context.lineWidth = 1;
+        context.strokeStyle = "red";
+        context.beginPath();
+        this.debugPath.center.forEach((pos, index) => {
+            if (index === 0) {
+                context.moveTo(pos.x, pos.y);
+            } else {
+                context.lineTo(pos.x, pos.y);
+            }
+            context.arc(pos.x, pos.y, 1, 0, Math.PI * 2); // Draw a small circle at each center point
+            context.moveTo(pos.x, pos.y); // Move back to the center point after drawing the circle
+        });
+        context.stroke();
+
+        context.strokeStyle = "blue";
+        context.beginPath();
+        this.debugPath.inner.forEach((pos, index) => {
+            if (index === 0) {
+                context.moveTo(pos.x, pos.y);
+            } else {
+                context.lineTo(pos.x, pos.y);
+            }
+            context.arc(pos.x, pos.y, 1, 0, Math.PI * 2); // Draw a small circle at each inner point
+            context.moveTo(pos.x, pos.y); // Move back to the inner point after drawing the circle
+        });
+        context.stroke();
+
+        context.strokeStyle = "green";
+        context.beginPath();
+        this.debugPath.outer.forEach((pos, index) => {
+            if (index === 0) {
+                context.moveTo(pos.x, pos.y);
+            } else {
+                context.lineTo(pos.x, pos.y);
+            }
+            context.arc(pos.x, pos.y, 1, 0, Math.PI * 2); // Draw a small circle at each outer point
+            context.moveTo(pos.x, pos.y); // Move back to the outer point after drawing the circle
+        });
+        context.stroke();
     }
 }

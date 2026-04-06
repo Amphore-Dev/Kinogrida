@@ -32,4 +32,5 @@ export type TEngineOptions = {
     showMouseHighlight?: boolean;
     speed: number;
     debug: boolean | TDebugOptions;
+    customShapes?: Record<string, import("@/types/TGrid.js").TShapeConstructor>;
 };

@@ -3,22 +3,10 @@ import { BaseShape } from "./BaseShape.js";
 import { randomInt } from "@/utils/UMath.js";
 
 export class ArcShape extends BaseShape {
-    protected progress = 0;
-    protected tailProgress = 0;
     protected angleOffset = 0;
     protected arc = 2;
     protected clockwise = true; // Sens de rotation : true = horaire, false = antihoraire
     protected rotationAmount = 0.25; // Amplitude de rotation : 0.25 (quart), 0.5 (demi), 0.75 (trois quarts), 1.0 (complet)
-
-    private debugPath: {
-        inner: TPosition[];
-        outer: TPosition[];
-        center: TPosition[];
-    } = {
-        inner: [],
-        outer: [],
-        center: [],
-    };
 
     constructor(
         grid: TGrid,
@@ -204,44 +192,6 @@ export class ArcShape extends BaseShape {
         }
     }
 
-    private drawDebugPath(context: CanvasRenderingContext2D) {
-        if (!this.debugPath || !this.isMoving) return;
-
-        context.lineWidth = 1;
-        context.strokeStyle = "red";
-        context.beginPath();
-        this.debugPath.center.forEach((pos, index) => {
-            if (index === 0) {
-                context.moveTo(pos.x, pos.y);
-            } else {
-                context.lineTo(pos.x, pos.y);
-            }
-        });
-        context.stroke();
-
-        context.strokeStyle = "blue";
-        context.beginPath();
-        this.debugPath.inner.forEach((pos, index) => {
-            if (index === 0) {
-                context.moveTo(pos.x, pos.y);
-            } else {
-                context.lineTo(pos.x, pos.y);
-            }
-        });
-        context.stroke();
-
-        context.strokeStyle = "green";
-        context.beginPath();
-        this.debugPath.outer.forEach((pos, index) => {
-            if (index === 0) {
-                context.moveTo(pos.x, pos.y);
-            } else {
-                context.lineTo(pos.x, pos.y);
-            }
-        });
-        context.stroke();
-    }
-
     private updateAnimationProgress(
         geometry: ReturnType<typeof this.calculateArcGeometry>,
     ) {
@@ -279,6 +229,10 @@ export class ArcShape extends BaseShape {
                 this.onMoveComplete(this.grid, newX, newY);
             }
         }
+    }
+
+    protected updatePosition(): void {
+        // ArcShape animation is driven by updateAnimationProgress in draw()
     }
 
     protected onMoveComplete(grid: TGrid, newX: number, newY: number): void {
@@ -405,20 +359,19 @@ export class ArcShape extends BaseShape {
             const centerX = arcCenterX + arcRadius * Math.cos(angle);
             const centerY = arcCenterY + arcRadius * Math.sin(angle);
 
-            if (showPath)
-                this.debugPath.center.push({ x: centerX, y: centerY });
-
             const innerRadius = Math.max(0.001, arcRadius - halfWidth);
             const innerX = arcCenterX + innerRadius * Math.cos(angle);
             const innerY = arcCenterY + innerRadius * Math.sin(angle);
-
-            if (showPath) this.debugPath.inner.push({ x: innerX, y: innerY });
 
             const outerRadius = arcRadius + halfWidth;
             const outerX = arcCenterX + outerRadius * Math.cos(angle);
             const outerY = arcCenterY + outerRadius * Math.sin(angle);
 
-            if (showPath) this.debugPath.outer.push({ x: outerX, y: outerY });
+            if (showPath) {
+                this.debugPath.center.push({ x: centerX, y: centerY });
+                this.debugPath.inner.push({ x: innerX, y: innerY });
+                this.debugPath.outer.push({ x: outerX, y: outerY });
+            }
 
             const checkCenter = addPoint(centerX, centerY);
             const checkInner = addPoint(innerX, innerY);
@@ -432,17 +385,5 @@ export class ArcShape extends BaseShape {
         }
 
         return path;
-    }
-
-    private isValidGridPosition(x: number, y: number, grid: TGrid): boolean {
-        return y >= 0 && y < grid.length && x >= 0 && x < grid[0].length;
-    }
-
-    private resetDebugPath() {
-        this.debugPath = {
-            inner: [],
-            outer: [],
-            center: [],
-        };
     }
 }

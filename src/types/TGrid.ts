@@ -24,3 +24,10 @@ export type TShapeConfig = {
     clockwise?: boolean; // Sens de rotation pour les formes animées
     rotationAmount?: number; // Amplitude de rotation : 0.25 (quart), 0.5 (demi), 0.75 (trois quarts), 1.0 (complet)
 };
+
+export type TShapeConstructor = new (
+    grid: TGrid,
+    x: number,
+    y: number,
+    options: TShapeConfig,
+) => BaseShape;
