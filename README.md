@@ -1,5 +1,11 @@
 # 🎨 Kinogrida
 
+<img src="example/src/assets//preview.gif" alt="Kinogrida Preview" />
+
+---
+
+<br/>
+
 **A TypeScript library for creating animated shape visualizations on HTML5 Canvas**
 
 Kinogrida provides a powerful and flexible system for creating animated grid-based visualizations with dynamic shape movements, collision detection, and customizable visual effects.
