@@ -34,7 +34,10 @@ function useLevaControls() {
       {
         type: {
           value: (saved.type as string) ?? "square",
-          options: [...Object.keys(SHAPES_TYPES), "diamond"],
+          options: [
+            ...Object.keys(SHAPES_TYPES),
+            //  "diamond" // Uncomment if using the DiamondShape example
+          ],
         },
         radiusPercent: {
           value: (saved.radiusPercent as number) ?? 0,

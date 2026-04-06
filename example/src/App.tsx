@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Kinogrida } from "@amphore-dev/kinogrida";
-import { DiamondShape } from "./classes/DiamondShape";
+// import { DiamondShape } from "./classes/DiamondShape";
 import { Modal } from "./components/Modal";
 import { Key } from "./components/Key";
 import { LevaControls } from "./components/LevaControls";
@@ -18,7 +18,7 @@ function App() {
 
     const engine = new Kinogrida(canvas, {
       showMouseHighlight: true,
-      customShapes: { diamond: DiamondShape },
+      //   customShapes: { diamond: DiamondShape }, // Uncomment if using the DiamondShape example, also uncomment in the "Shape Add" folder in LevaControls
     });
     engineRef.current = engine;
     engine.play();

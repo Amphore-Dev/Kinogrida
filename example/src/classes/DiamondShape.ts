@@ -36,7 +36,6 @@ export class DiamondShape extends BaseShape {
     const { cellSize, offsetX, offsetY, lineWidth } = gridConfig;
 
     const baseSize = cellSize * 0.8 - gridConfig.lineWidth;
-    const halfSize = (baseSize - gridConfig.lineWidth) / 2;
 
     const centerX = this.x * cellSize + cellSize / 2 + offsetX;
     const centerY = this.y * cellSize + cellSize / 2 + offsetY;
